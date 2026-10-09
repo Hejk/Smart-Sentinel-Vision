@@ -47,7 +47,7 @@ USB 串口命令：`c`=采图推理 `p`=ASCII预览 `i`=信息 `r`=重试摄像�
 
 ## AI 模型
 
-当前 `src/ai_infer.cpp` 为**占位推理**（固定输出，供联调）。
+已接入 Edge Impulse 真模型（3类：bird/unknown/wildboar，96x96，<0.4 归 unknown）。zip 在 `edge-impulse/`，解压为 `edge-impulse/model-v2/`（gitignore，不入库）。
 替换 Edge Impulse 真模型的 5 步操作写在 `ai_infer.cpp` 顶部注释里，对外接口不变。
 
 ## 版本

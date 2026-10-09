@@ -1,2 +1,5 @@
 workspace.code-workspace
 .pio/
+# EI SDK 解压后的源码树很大(1500+文件)，zip 是源头，这里不入库
+edge-impulse/model-v2/*
+!edge-impulse/model-v2/library.json

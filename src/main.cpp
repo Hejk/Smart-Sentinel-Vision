@@ -46,14 +46,19 @@ static void do_capture_infer_send(const char* trigger)
 
 static void print_info(void)
 {
+    char forcedTxt[32];
+    if (ai_infer_forced_active())
+        snprintf(forcedTxt, sizeof(forcedTxt), "%s/%s",
+                 ANIMAL_EN[ai_infer_get_forced()], ANIMAL_CN[ai_infer_get_forced()]);
+    else
+        snprintf(forcedTxt, sizeof(forcedTxt), "off(EI真模型)");
+
     Serial.printf("[INFO] heap=%uKB psram=%uKB frames=%u cam=%d "
-                  "forced=%s(%s) auto=%ds\n",
+                  "forced=%s auto=%ds\n",
                   (unsigned)(ESP.getFreeHeap() / 1024),
                   (unsigned)(ESP.getFreePsram() / 1024),
                   (unsigned)s_frame_cnt, (int)s_cam_ok,
-                  ANIMAL_EN[ai_infer_get_forced()],
-                  ANIMAL_CN[ai_infer_get_forced()],
-                  AUTO_CAPTURE_SEC);
+                  forcedTxt, AUTO_CAPTURE_SEC);
 }
 
 static void print_preview(void)
@@ -91,12 +96,17 @@ static void handle_usb_cmd(char c)
     default:
         if (c >= '0' && c <= '0' + AN_COUNT - 1) {
             ai_infer_set_forced((uint8_t)(c - '0'));
-            Serial.printf("[USB] 强制类别=%s(%s)，下次推理生效\n",
+            Serial.printf("[USB] 强制类别=%s(%s)，发 o 恢复真模型\n",
                           ANIMAL_EN[c - '0'], ANIMAL_CN[c - '0']);
             return;
         }
+        if (c == 'o') {
+            ai_infer_clear_forced();
+            Serial.println("[USB] 已恢复真模型推理");
+            return;
+        }
         if (c != '\r' && c != '\n')
-            Serial.println("[USB] 命令：c=采图推理 p=预览 i=信息 r=重试摄像头 0~5=强制类别");
+            Serial.println("[USB] 命令：c=采图推理 p=预览 i=信息 r=重试摄像头 0~5=强制类别 o=恢复真模型");
     }
 }
 
@@ -115,7 +125,7 @@ void setup()
                   (unsigned)(ESP.getFreePsram() / 1024));
     Serial.println("[HW] OV7670: SCL=1 SDA=2 XCLK=3 VSYNC=4 HREF=5 PCLK=6 D0~D7=7~14 RST=15");
     Serial.printf("[HW] UART1:  TX=17 RX=18 @%d（与主控交叉相接）\n", AI_UART_BAUD);
-    Serial.println("[USB] 命令：c=采图推理 p=预览 i=信息 r=重试摄像头 0~5=强制类别");
+    Serial.println("[USB] 命令：c=采图推理 p=预览 i=信息 r=重试摄像头 0~5=强制类别 o=恢复真模型");
 
     if (!psramFound())
         Serial.println("[HW] ★警告：PSRAM 未启用！检查 memory_type=qio_opi 配置");

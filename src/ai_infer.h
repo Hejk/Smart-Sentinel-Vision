@@ -24,9 +24,11 @@ struct AiResult {
 };
 
 // 推理入口：输入 96x96 灰度图（行优先，0~255）。
-// 当前为占位实现；后续整体替换为 Edge Impulse C++ 库，接口不变
+// 内部跑 Edge Impulse 真模型（3 类），输出映射回 6 类协议表 + unknown
 bool ai_infer_gray96(const uint8_t* gray96, size_t len, AiResult* out);
 
-// 占位调试：强制下一次推理输出指定类别（0~5），接入真模型后自然失效
+// 调试覆盖：强制下一次推理输出指定类别（0~5）
 void    ai_infer_set_forced(uint8_t cls);
-uint8_t ai_infer_get_forced(void);
+void    ai_infer_clear_forced(void);        // 取消覆盖，恢复真模型
+bool    ai_infer_forced_active(void);       // 当前是否处于覆盖状态
+uint8_t ai_infer_get_forced(void);          // AN_COUNT = 未覆盖
