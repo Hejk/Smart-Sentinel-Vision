@@ -23,6 +23,9 @@ static bool     s_has_frame = false;    // 有有效的缩放结果可供预览
 static uint32_t s_frame_cnt = 0;
 static uint32_t s_last_auto = 0;
 static bool     s_cam_ok    = false;
+static bool     s_smoke_done = false;   // 首帧链路自测（强制 wild_boar 上报一次）
+
+static void print_preview(void);        // 前置声明：定义在下方
 
 // 一轮完整动作：采集 → 缩放 → 推理 → UART 上报
 static void do_capture_infer_send(const char* trigger)
@@ -36,11 +39,23 @@ static void do_capture_infer_send(const char* trigger)
     if (!ok) return;
     s_has_frame = true;
 
+    // ★ 每次采图自动打印画面预览（无需键盘命令，串口里直接“看”摄像头拍到什么）
+    print_preview();
+
     AiResult r;
     if (ai_infer_gray96(s_gray96, sizeof(s_gray96), &r)) {
         Serial.printf("[MAIN] 触发=%s 推理=%s(%s) conf=%.2f\n",
                       trigger, r.animal_en, r.label_cn, r.confidence);
         ai_link_send_result(r);         // → UART1: {"type":"result",...}
+    }
+
+    // ★ 首帧链路自测：额外强制上报一次 wild_boar，验证 主控放音+红爆闪 整条链
+    //   （不看摄像头拍到了什么，专为验证 V2→UART→V1→喇叭 这条路通不通）
+    if (!s_smoke_done) {
+        s_smoke_done = true;
+        AiResult smoke = { ANIMAL_EN[AN_WILD_BOAR], ANIMAL_CN[AN_WILD_BOAR], 0.85f };
+        Serial.println("[链路自测] 首帧额外强制上报 wild_boar(0.85) → 主控应放 wild_boar.wav + 红爆闪");
+        ai_link_send_result(smoke);
     }
 }
 

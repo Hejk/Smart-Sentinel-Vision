@@ -1,0 +1,10 @@
+# Name,   Type, SubType, Offset,   Size,      Flags
+# ★ 2026-10-13 复位循环修复（rst:0x3 无限循环、无任何 boot 日志）：
+#   板子是 N16R8（16MB），旧表把 storage 顶格布到 0x1000000（16MB）。
+#   预编译 bootloader 的 flash size 未知（镜像头 0xF=UNSPECIFIED），
+#   分区表超出其配置范围 → bootloader 拒绝引导 → esp_restart 循环。
+#   现把布局压进 8MB（与能正常跑的 V1 板同边界），app 分区全部落在
+#   4MB 以内：无论 bootloader 按 4MB 还是 8MB 初始化都能通过校验。
+nvs,      data, nvs,     0x9000,   0x5000,
+factory,  app,  factory, 0x10000,  0x300000,
+storage,  data, spiffs,  0x310000, 0x4F0000,
